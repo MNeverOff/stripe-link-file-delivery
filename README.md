@@ -5,7 +5,7 @@ Because Themeforest, Gumroad and KoFi may be nice, but why not manage your own p
 
 ## Demo
 
-TODO: Insert GitHub Video
+[demo.webm](https://github.com/MNeverOff/stripe-link-file-delivery/assets/3989091/4ae214e3-33a3-461c-89b5-65b08a02b562)
 
 ## In-depth guide
 
