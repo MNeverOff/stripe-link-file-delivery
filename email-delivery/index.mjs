@@ -45,7 +45,7 @@ export const handler = async (event) => {
             redirectUrl = `${process.env.redirect_host}${encodeURIComponent(presignedUrl)}${process.env.utm_parameters}`;
 
             const emailBody = {
-                templateId: 1,
+                templateId: process.env.brevo_template_id,
                 to: [{ email: recipientEmail }], // use the email from the webhook
                 params: { downloadURL: redirectUrl }
             };
