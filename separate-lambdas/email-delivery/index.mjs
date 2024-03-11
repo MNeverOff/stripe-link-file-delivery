@@ -1,4 +1,4 @@
-import axios from 'axios';
+import Axios from 'axios';
 import stripe from 'stripe';
 import AWS from 'aws-sdk';
 
@@ -39,19 +39,19 @@ export const handler = async (event) => {
             const params = {
                 Bucket: process.env.bucket_name,
                 Key: process.env.object_key,
-                Expires: 60 * 60 * 24 * 30 // 30 days
+                Expires: parseInt(process.env.link_expiration, 10)
             };
             const presignedUrl = s3.getSignedUrl('getObject', params);
             redirectUrl = `${process.env.redirect_host}${encodeURIComponent(presignedUrl)}${process.env.utm_parameters}`;
 
             const emailBody = {
-                templateId: process.env.brevo_template_id,
-                to: [{ email: recipientEmail }], // use the email from the webhook
-                params: { downloadURL: redirectUrl }
+                templateId: parseInt(process.env.brevo_template_id, 10),
+                to: [{ email: recipientEmail }],
+                params: { download_url: redirectUrl }
             };
 
             try {
-                await axios.post('https://api.sendinblue.com/v3/smtp/email', emailBody, {
+                await Axios.post('https://api.sendinblue.com/v3/smtp/email', emailBody, {
                     headers: {
                     'accept': 'application/json',
                     'content-type': 'application/json',

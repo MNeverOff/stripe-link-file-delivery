@@ -1,8 +1,6 @@
-import Axios from 'axios';
 import Stripe from 'stripe';
 import AWS from 'aws-sdk';
 
-// Specifying the IAM User with S3 access to generate long-lived Signed URLs
 const s3 = new AWS.S3({
     accessKeyId: process.env.S3_ACCESS_KEY_ID,
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY
@@ -26,6 +24,7 @@ export const handler = async (event) => {
 
     const session_id = event.queryStringParameters.session_id;
     let session;
+
     let chargeSucceeded = false;
 
     // A crude way to check if the charge has succeeded, retrying 20 times with a 250ms delay - so giving it 5 seconds to succeed
@@ -35,7 +34,7 @@ export const handler = async (event) => {
             session = await stripe.checkout.sessions.retrieve(session_id);
             if (session.payment_status === 'paid') {
                 chargeSucceeded = true;
-                console.log(`Charge succeeded for session id ${session_id} after ${i+1} attempts. Environment: ${event.stageVariables.environment}.`);
+                console.log(`Charge succeeded for session id ${session.id} after ${i+1} attempts. Environment: ${event.stageVariables.environment}.`);
                 break;
             }
         } catch (error) {
@@ -45,16 +44,10 @@ export const handler = async (event) => {
                 body: `Payment exception. Contact ${process.env.support_email}.\nError Details: Failed to retrieve session: ${error.message} after ${i+1} attempts. Environment: ${event.stageVariables.environment}.`
             };
         }
-        await new Promise(resolve => setTimeout(resolve, 250));
+        await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
     if (chargeSucceeded) {
-        let recipientEmail = session?.customer_details?.email;
-
-        if (!recipientEmail) {
-            recipientEmail = process.env.fallback_email;
-        }
-
         const params = {
             Bucket: process.env.bucket_name,
             Key: process.env.object_key,
@@ -63,28 +56,7 @@ export const handler = async (event) => {
         const presignedUrl = s3.getSignedUrl('getObject', params);
         const redirectUrl = `${process.env.redirect_host}${encodeURIComponent(presignedUrl)}${process.env.utm_parameters}`;
 
-        const emailBody = {
-            templateId: parseInt(process.env.brevo_template_id, 10),
-            to: [{ email: recipientEmail }],
-            params: { download_url: redirectUrl }
-        };
-
-        try {
-            await Axios.post('https://api.sendinblue.com/v3/smtp/email', emailBody, {
-                headers: {
-                'accept': 'application/json',
-                'content-type': 'application/json',
-                'api-key': process.env.brevo_api_key
-                }
-            });
-
-            console.log(`Email sent for session id ${session_id}`);
-        } catch (err) {
-            console.log(`Failed to send email for session id ${session_id}`, err);
-        }
-
         console.log(`Redirecting to ${redirectUrl} in environment ${event.stageVariables.environment}.`);
-
         return {
             statusCode: 302,
             headers: {

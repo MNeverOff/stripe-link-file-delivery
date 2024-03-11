@@ -1,7 +1,6 @@
 ![Cover Image](assets/cover.svg)
 
-This is a simple serverless application that uses AWS Lambda, Stripe and Brevo to deliver files to customers after they have made a payment via your Stripe Payment Link.
-Because Themeforest, Gumroad and KoFi may be nice, but why not manage your own payment links and have a straight-forward user experience?
+This is a simple serverless application that uses AWS Lambda, Stripe and Brevo to deliver files to customers after they have made a payment via your Stripe Payment Link. Because Gumroad and KoFi may be nice, but why not manage your own payment links and have a straight-forward user experience?
 
 ## Demo
 
@@ -9,19 +8,63 @@ Because Themeforest, Gumroad and KoFi may be nice, but why not manage your own p
 
 ## In-depth guide
 
-You can read a detailed guide on setting this up in [my blog.](neveroff.dev/blog/download-file-stripe-payment-link/) (under construction).
+You can read a detailed guide on setting this up in [my blog.](neveroff.dev/blog/stripe-payment-link-file-download-with-email/) (under construction).
 
 ## Getting started without the guide
 
 1. Check out the repository into a local folder, open the terminal at the root folder.
-2. Do `npm install && zip -r ../file-and-email-delivery.zip .` to generate the zipped folder with all the necessary files.
-3. Do `cd email-delivery` followed by `npm install && zip -r ../email-delivery.zip .`  and then `cd ../file-delivery` followed by `npm install && zip -r ../file-delivery.zip .`. This will generate the node_modules folders necessary for Lambdas to work.
-4. Go to the AWS Console and create a new Lambda function for each of the zipped folders, using the `index.mjs` as the handler.
-5. Configure the API Gateway to point to the Lambda functions and supply the Stage Varibles as per the `index.mjs` files in both file and email delivery folders.
-6. Configure the Environment variables as per the `index.mjs` files in both file and email delivery folders.
-7. Configure the Stripe Payment Link to point to the API Gateway URL for the `file-delivery` Lambda.
-8. Configure a new Stripe Webhook on the `checkout.session.completed` event to point to the API Gateway URL for the `email-delivery` Lambda.
+2. Do `cd file-and-email-delivery && npm install && zip -r ../file-and-email-delivery.zip .`. This will generate the node_modules folders necessary for Lambdas to work and create a .zip archive that you can upload to the Lambda Code section.
+3. Create a new IAM role with the S3 `GetObject` permission for your object and bucket, generate an Access Key pair.
+4. Create a new Lambda function, call it `file-and-email-delivery`, upload the .zip file you've just 1reated.
+5. Configure the API Gateway to point to the Lambda functions and supply the Stage Varibles as per the `index.mjs` files in both 1ile and email delivery folders, see Variables below. It's worth it to create two Stages - `prod` and `test` to be able to use 1tripe Test mode separately.
+6. Configure the Environment Variables as per the `index.mjs` or the Variables reference below.
+7. Configure the Stripe Payment Link to point to the API Gateway URL for the `file-and-email-delivery` Lambda.
+8. Configure Brevo and your Static Site, get the Brevo Tempalte ID, API Key, insert the script to initiate the download from /download_url.html, insert the Stripe Payment Link URL or Button embed.
 9. Use the Stripe Test mode to ensure that your customer path is working as expected and an email is sent out with the file download link.
+
+## Variables
+
+### Environment Variables
+
+Provide thtese under Lambda -> Configuration -> Environment Variables:
+
+| Label | Note |
+| -------- | --- |
+| S3_ACCESS_KEY_ID | The IAM user Access Key |
+| S3_SECRET_ACCESS_KEY | The IAM user Access Secret Key |
+| bucket_name | The name of S3 bucket with the file, `file-delivery` in our case |
+| object_key | The file's object key, `file.zip` |
+| redirect_host | The url of our confirmation page |
+| brevo_api_key | The API Key from Brevo which we'll set up later, leave it as `TBD` |
+| brevo_template_id | The ID of the template in Brevo, by default it's `1` |
+| link_expiration | The number of seconds the file will be acessible via the link. Default is 30 days, which is `2592000` seconds |
+| fallback_email | An email to send message to in case customer haven't provided their email during checkout |
+| support_email | A parameter to show customers if payment confirmation failed to contact |
+| utm_parameters | Optional UTM parameters to add after the redirect url. Enter `&none` by default |
+
+### Stage Variables
+
+Provide thtese under API Gateway -> Stage -> Stage Variables:
+
+| Label | Note |
+| -------- | --- |
+| environment | Text to identify the environment in logs |
+| stripe_secret_api_key | The Secret Key from Stripe Developer dashboard |
+
+## Full Flow Diagram
+
+![Flow Diagram](assets/flow.svg)
+
+This diagram roughly outlines the flow of the application. The customer clicks the Stripe Payment Link, is redirected to the API Gateway, which triggers the Lambda function. The Lambda function checks the payment status with Stripe, if it's successful, it sends an email with the download link and redirects the customer to the confirmation page. If the payment is not successful, it redirects the customer to the support email.
+
+## Separate Lambdas
+
+If you navigate to `/separate-lambdas` you can find a version of the application that uses separate Lambdas for each of the functions. This is useful if you want to have a more granular control over the permissions and the codebase or want to rely on webhooks more heavily, or want each of the lambdas to execute just a bit quicker - it's all up to you.
+Bear in mind that I am not updating thoe files in lockstep so some of the variables might be different.
+
+## Contributing
+
+I'm open to contribution and suggestions, feel free to open an issue or a pull request.
 
 ## License
 
