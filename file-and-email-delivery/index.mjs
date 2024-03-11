@@ -10,7 +10,7 @@ const s3 = new AWS.S3({
 
 export const handler = async (event) => {
     const stripe = new Stripe(event.stageVariables.stripe_secret_api_key);
-    const sessionId = event.queryStringParameters.sessionId;
+    const session_id = event.queryStringParameters.session_id;
 
     let chargeSucceeded = false;
 
@@ -18,10 +18,10 @@ export const handler = async (event) => {
     // TODO: Improve. Add a redirect to "payment exception" page with contact for support.
     for (let i = 0; i < 20; i++) {
         try {
-            const session = await stripe.checkout.sessions.retrieve(sessionId);
+            const session = await stripe.checkout.sessions.retrieve(session_id);
             if (session.payment_status === 'paid') {
                 chargeSucceeded = true;
-                console.log(`Charge succeeded for session id ${sessionId} after ${i+1} attempts. Environment: ${event.stageVariables.environment}.`);
+                console.log(`Charge succeeded for session id ${session_id} after ${i+1} attempts. Environment: ${event.stageVariables.environment}.`);
                 break;
             }
         } catch (error) {
@@ -60,7 +60,7 @@ export const handler = async (event) => {
                 headers: {
                 'accept': 'application/json',
                 'content-type': 'application/json',
-                'api-key': event.stageVariables.brevo_api_key
+                'api-key': process.env.brevo_api_key
                 }
             });
 
@@ -79,10 +79,10 @@ export const handler = async (event) => {
             body: ''
         };
     } else {
-        console.log(`Charge did not succeed for session id ${sessionId}. Environment: ${event.stageVariables.environment}.`);
+        console.log(`Charge did not succeed for session id ${session.id}. Environment: ${event.stageVariables.environment}.`);
         return {
             statusCode: 400,
-            body: `Payment exception. Contact ${process.env.support_email}.<br/>Error Details: Charge did not succeed for session id ${sessionId}. Environment: ${event.stageVariables.environment}.`
+            body: `Payment exception. Contact ${process.env.support_email}.<br/>Error Details: Charge did not succeed for session id ${session.id}. Environment: ${event.stageVariables.environment}.`
         };
     }
 };
