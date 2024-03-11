@@ -11,6 +11,7 @@ const s3 = new AWS.S3({
 export const handler = async (event) => {
     const stripe = new Stripe(event.stageVariables.stripe_secret_api_key);
     const session_id = event.queryStringParameters.session_id;
+    const session = await stripe.checkout.sessions.retrieve(session_id);
 
     let chargeSucceeded = false;
 
@@ -18,7 +19,6 @@ export const handler = async (event) => {
     // TODO: Improve. Add a redirect to "payment exception" page with contact for support.
     for (let i = 0; i < 20; i++) {
         try {
-            const session = await stripe.checkout.sessions.retrieve(session_id);
             if (session.payment_status === 'paid') {
                 chargeSucceeded = true;
                 console.log(`Charge succeeded for session id ${session_id} after ${i+1} attempts. Environment: ${event.stageVariables.environment}.`);
@@ -35,7 +35,7 @@ export const handler = async (event) => {
     }
 
     if (chargeSucceeded) {
-        recipientEmail = session.customer_details.email;
+        const recipientEmail = session.customer_details.email;
 
         if (!recipientEmail) {
             recipientEmail = process.env.fallback_email;
@@ -44,13 +44,13 @@ export const handler = async (event) => {
         const params = {
             Bucket: process.env.bucket_name,
             Key: process.env.object_key,
-            Expires: process.env.link_expiration
+            Expires: parseInt(process.env.link_expiration, 10)
         };
         const presignedUrl = s3.getSignedUrl('getObject', params);
         const redirectUrl = `${process.env.redirect_host}${encodeURIComponent(presignedUrl)}${process.env.utm_parameters}`;
 
         const emailBody = {
-            templateId: process.env.brevo_template_id,
+            templateId: parseInt(process.env.brevo_template_id, 10),
             to: [{ email: recipientEmail }],
             params: { download_url: redirectUrl }
         };
