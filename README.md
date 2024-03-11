@@ -19,7 +19,7 @@ You can read a detailed guide on setting this up in [my blog.](neveroff.dev/blog
 5. Configure the API Gateway to point to the Lambda functions and supply the Stage Varibles as per the `index.mjs` files in both 1ile and email delivery folders, see Variables below. It's worth it to create two Stages - `prod` and `test` to be able to use 1tripe Test mode separately.
 6. Configure the Environment Variables as per the `index.mjs` or the Variables reference below.
 7. Configure the Stripe Payment Link to point to the API Gateway URL for the `file-and-email-delivery` Lambda.
-8. Configure Brevo and your Static Site, get the Brevo Tempalte ID, API Key, insert the script to initiate the download from /download_url.html, insert the Stripe Payment Link URL or Button embed.
+8. Configure Brevo and your Static Site, get the Brevo Tempalte ID, API Key, insert the script to initiate the download from [download_url.html](/download_url.html), insert the Stripe Payment Link URL or Button embed.
 9. Use the Stripe Test mode to ensure that your customer path is working as expected and an email is sent out with the file download link.
 
 ## Variables
