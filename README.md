@@ -70,4 +70,4 @@ I would be especially grateful for suggestions on how to speed up the Lambda to 
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
