@@ -1,7 +1,6 @@
 {
+  "type": "module",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.529.1",
-    "@aws-sdk/s3-request-presigner": "^3.529.1",
     "axios": "^1.6.7",
     "stripe": "^14.20.0"
   }
