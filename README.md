@@ -8,7 +8,7 @@ This is a simple serverless application that uses AWS Lambda, Stripe and Brevo t
 
 ## In-depth guide
 
-You can read a detailed guide on setting this up in [my blog.](neveroff.dev/blog/stripe-payment-link-file-download-with-email/) (under construction).
+You can read a detailed guide on setting this up in [my blog](https://neveroff.dev/blog/stripe-payment-link-file-download-with-email/).
 
 ## Getting started without the guide
 
