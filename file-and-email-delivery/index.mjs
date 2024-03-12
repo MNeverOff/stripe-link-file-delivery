@@ -5,7 +5,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Specifying the IAM User with S3 access to generate long-lived Signed URLs
 const s3Client = new S3Client({
-    region: process.env.S3_,
+    region: process.env.S3_REGION,
     credentials: {
         accessKeyId: process.env.S3_ACCESS_KEY_ID,
         secretAccessKey: process.env.S3_SECRET_ACCESS_KEY
@@ -73,18 +73,32 @@ export const handler = async (event) => {
             params: { download_url: redirectUrl }
         };
 
-        try {
-            await Axios.post('https://api.sendinblue.com/v3/smtp/email', emailBody, {
+        if (process.env.email_mode === "ensure-delivery") {
+            try {
+                await Axios.post('https://api.sendinblue.com/v3/smtp/email', emailBody, {
+                    headers: {
+                        'accept': 'application/json',
+                        'content-type': 'application/json',
+                        'api-key': process.env.brevo_api_key
+                    }
+                });
+        
+                console.log(`Email was sent for session id ${session_id}.`);
+            } catch (err) {
+                console.log(`Failed to send email for session id ${session_id}.`, err);
+            }
+        } else {
+            Axios.post('https://api.sendinblue.com/v3/smtp/email', emailBody, {
                 headers: {
-                'accept': 'application/json',
-                'content-type': 'application/json',
-                'api-key': process.env.brevo_api_key
+                    'accept': 'application/json',
+                    'content-type': 'application/json',
+                    'api-key': process.env.brevo_api_key
                 }
+            }).catch(err => {
+                console.log(`Failed to send email for session id ${session_id}.`, err);
             });
-
-            console.log(`Email sent for session id ${session_id}`);
-        } catch (err) {
-            console.log(`Failed to send email for session id ${session_id}`, err);
+        
+            console.log(`Email request was sent for session id ${session_id}.`);
         }
 
         console.log(`Redirecting to ${redirectUrl} in environment ${event.stageVariables.environment}.`);
