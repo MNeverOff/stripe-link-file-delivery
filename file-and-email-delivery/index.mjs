@@ -1,11 +1,15 @@
 import Axios from 'axios';
 import Stripe from 'stripe';
-import AWS from 'aws-sdk';
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // Specifying the IAM User with S3 access to generate long-lived Signed URLs
-const s3 = new AWS.S3({
-    accessKeyId: process.env.S3_ACCESS_KEY_ID,
-    secretAccessKey: process.env.S3_SECRET_ACCESS_KEY
+const s3Client = new S3Client({
+    region: "us-east-1",
+    credentials: {
+        accessKeyId: process.env.S3_ACCESS_KEY_ID,
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY
+    }
 });
 
 export const handler = async (event) => {
@@ -55,12 +59,12 @@ export const handler = async (event) => {
             recipientEmail = process.env.fallback_email;
         }
 
-        const params = {
+        const command = new GetObjectCommand({
             Bucket: process.env.bucket_name,
-            Key: process.env.object_key,
-            Expires: parseInt(process.env.link_expiration, 10)
-        };
-        const presignedUrl = s3.getSignedUrl('getObject', params);
+            Key: process.env.object_key
+        });
+    
+        const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: parseInt(process.env.link_expiration, 10) });
         const redirectUrl = `${process.env.redirect_host}${encodeURIComponent(presignedUrl)}${process.env.utm_parameters}`;
 
         const emailBody = {
