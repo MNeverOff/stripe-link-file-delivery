@@ -114,13 +114,13 @@ export const handler = async (event) => {
 
         if (process.env.email_mode === "ensure-delivery") {
             try {
-                await request(url, data, headers, false);
+                await request(url, data, headers, true);
                 console.log(`Email was sent for session id ${session_id}.`);
             } catch (err) {
                 console.log(`Failed to send email for session id ${session_id}.`, err);
             }
         } else {
-            await request(url, data, headers, true)
+            await request(url, data, headers, false)
             .then(() => {
                 console.log(`Email request was sent for session id ${session_id}.`);
             }).catch(err => {
