@@ -13,11 +13,11 @@ You can read a detailed guide on setting this up in [my blog](https://neveroff.d
 ## Getting started without the guide
 
 1. Check out the repository into a local folder, open the terminal at the root folder.
-2. Do `cd file-and-email-delivery && npm install && zip -r ../file-and-email-delivery.zip .`. This will generate the node_modules folders necessary for Lambdas to work and create a .zip archive that you can upload to the Lambda Code section.
+2. Do `cd file-and-email-delivery && npm install && npm run build && cd dist && zip -r ../../file-and-email-delivery.zip .`. This set of commands will install npm modules, build the code and tree-shake it via webpack, generate a dist folder with a single .js file and .zip it for upload to AWS.
 3. Create a new IAM role with the S3 `GetObject` permission for your object and bucket, generate an Access Key pair.
 4. Create a new Lambda function, call it `file-and-email-delivery`, upload the .zip file you've just 1reated. Set Lambda Configuration to 1,769 MB Memory or whatever's the latest value that gives you a full 1vCPU accoridng to [the manual](https://docs.aws.amazon.com/lambda/latest/dg/configuration-function-common.html#configuration-memory-console).
-5. Configure the API Gateway to point to the Lambda functions and supply the Stage Varibles as per the `index.mjs` files in both 1ile and email delivery folders, see Variables below. It's worth it to create two Stages - `prod` and `test` to be able to use 1tripe Test mode separately.
-6. Configure the Environment Variables as per the `index.mjs` or the Variables reference below.
+5. Configure the API Gateway to point to the Lambda functions and supply the Stage Varibles as per the `index.js` files in both 1ile and email delivery folders, see Variables below. It's worth it to create two Stages - `prod` and `test` to be able to use 1tripe Test mode separately.
+6. Configure the Environment Variables as per the `index.js` or the Variables reference below.
 7. Configure the Stripe Payment Link to point to the API Gateway URL for the `file-and-email-delivery` Lambda.
 8. Configure Brevo and your Static Site, get the Brevo Tempalte ID, API Key, insert the script to initiate the download from [download_url.html](/download_url.html), insert the Stripe Payment Link URL or Button embed.
 9. Use the Stripe Test mode to ensure that your customer path is working as expected and an email is sent out with the file download link.
@@ -32,14 +32,16 @@ Provide thtese under Lambda -> Configuration -> Environment Variables:
 | -------- | --- |
 | S3_ACCESS_KEY_ID | The IAM user Access Key |
 | S3_SECRET_ACCESS_KEY | The IAM user Access Secret Key |
+| S3_REGION | The region of your S3 bucket. `us-east-1` by default |
 | bucket_name | The name of S3 bucket with the file, `file-delivery` in our case |
 | object_key | The file's object key, `file.zip` |
 | redirect_host | The url of our confirmation page |
 | brevo_api_key | The API Key from Brevo which we'll set up later, leave it as `TBD` |
 | brevo_template_id | The ID of the template in Brevo, by default it's `1` |
-| link_expiration | The number of seconds the file will be acessible via the link. Default is 30 days, which is `2592000` seconds |
+| link_expiration | The number of seconds the file will be acessible via the link. Cannot exceed 7 days, which is `604800` seconds |
 | fallback_email | An email to send message to in case customer haven't provided their email during checkout |
 | support_email | A parameter to show customers if payment confirmation failed to contact |
+| email_mode | Whether the code should await email server response and log it. Unless the value is `ensure-delivery` it will be sent but the answer won't be awaited and logged |
 | utm_parameters | Optional UTM parameters to add after the redirect url. Enter `&none` by default |
 
 ### Stage Variables
@@ -60,20 +62,19 @@ This diagram roughly outlines the flow of the application. The customer clicks t
 ## Separate Lambdas
 
 If you navigate to [separate-lambdas](/separate-lambdas) you can find a version of the application that uses separate Lambdas for each of the functions. This is useful if you want to have a more granular control over the permissions and the codebase or want to rely on webhooks more heavily, or want each of the lambdas to execute just a bit quicker - it's all up to you.
-Bear in mind that I am not updating thoe files in lockstep so some of the variables might be different.
+Bear in mind that I am not updating thoe files in lockstep so some of the variables might be different, specifically - they are woefully unoptimised compared to the current combined version with execution times in 1,000-1,500ms and still don't rely on built-in aws-sdk-js-v3 that Lambda environment provides.
 
 ## Performance
 
-When configured with 1 vCPU (currently 1,769 MB) the cold start is ~1000ms and execution is ~900ms, achieving sub-2s processing.
+When configured with 1 vCPU (currently 1,769 MB) the cold start is ~450ms and execution is ~300ms, **achieving sub-750ms processing**.
 
-If the function is hot then the total execution goes down to ~400ms.
+If the function is hot then the total execution goes down to ~200ms.
 
-## Potential improvements
+These figures assume `email_mode` is not set to `ensure-delivery`. If it is then both cold and hot execution times rises by about 100-150ms.
 
-1. It's possible to replace the AWS-LIB with a more lightweight library to avoid having to go over 10MB limit thus reducing cold start time, i.e. [aws-sdk-js-v3](https://github.com/aws/aws-sdk-js-v3). Maybe even reimplement the code from scratch since it's a static-ish function. *Courtesy of [firenero](https://github.com/firenero)*.
-2. If going modular will allow to go below 10MB it's worth comparing .zip version vs network version to see which one processess faster.
-3. It's also possible to change the email invocation to abandon waiting for response, thus reducing the total execution time. This comes with a risk of us not having logs of email being sent or failing to send, but it's worth considering or maybe adding as an environment variable parameter.
-4. It's possible to use a language different to JS that would have faster execution times or better package separation.
+### Potential improvements
+
+1. It's possible to use a language different from JS (Go?) that would have faster execution times or better init times. JS is not the fastest, but with tree-shaking it gets sub 750ms which is commendable.
 
 ## Contributing
 
