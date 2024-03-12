@@ -1,15 +1,14 @@
 {
   "type": "module",
   "dependencies": {
-    "axios": "^1.6.7",
-    "stripe": "^14.20.0"
+    "https": "^1.0.0",
+    "stripe": "^14.20.0",
+    "url": "^0.11.3"
   },
   "devDependencies": {
-    "debug": "^4.3.4",
-    "webpack": "^5.90.3",
-    "webpack-cli": "^5.1.4"
+    "esbuild": "^0.20.1"
   },
   "scripts": {
-    "build": "webpack"
+    "build": "esbuild ./index.js --bundle --platform=node --external:@aws-sdk/s3-request-presigner --external:@aws-sdk/client-s3 --minify --outfile=./dist/index.js"
   }
 }

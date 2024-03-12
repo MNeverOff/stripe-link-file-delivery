@@ -1,4 +1,5 @@
-import Axios from 'axios';
+import HTTPS from 'https';
+import URL from 'url';
 import Stripe from 'stripe';
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -11,6 +12,36 @@ const s3Client = new S3Client({
         secretAccessKey: process.env.S3_SECRET_ACCESS_KEY
     }
 });
+
+async function request(url, data, headers, blocking) {
+    return new Promise((resolve, reject) => {
+        const options = {
+            ...URL.parse(url),
+            method: 'POST',
+            headers: {
+                ...headers,
+                'Content-Length': data.length
+            }
+        };
+
+        if (blocking) {
+            let req = HTTPS.request(options, function (res) {
+                let body = ''
+                res.on('data', (chunk) => { body += chunk })
+                res.on('end', () => { resolve(body) })
+            })
+            req.write(data)
+            req.end()
+        } else {
+            let req = HTTPS.request(options)
+            req.write(data)
+            req.end(null, null, () => {
+                /* Request has been fully sent */
+                resolve(req)
+            });
+        }
+    });
+}
 
 export const handler = async (event) => {
     const stripe = new Stripe(event.stageVariables.stripe_secret_api_key);
@@ -73,32 +104,28 @@ export const handler = async (event) => {
             params: { download_url: redirectUrl }
         };
 
+        const url = 'https://api.sendinblue.com/v3/smtp/email';
+        const data = JSON.stringify(emailBody);
+        const headers = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'api-key': process.env.brevo_api_key
+        };
+
         if (process.env.email_mode === "ensure-delivery") {
             try {
-                await Axios.post('https://api.sendinblue.com/v3/smtp/email', emailBody, {
-                    headers: {
-                        'accept': 'application/json',
-                        'content-type': 'application/json',
-                        'api-key': process.env.brevo_api_key
-                    }
-                });
-        
+                await request(url, data, headers, false);
                 console.log(`Email was sent for session id ${session_id}.`);
             } catch (err) {
                 console.log(`Failed to send email for session id ${session_id}.`, err);
             }
         } else {
-            Axios.post('https://api.sendinblue.com/v3/smtp/email', emailBody, {
-                headers: {
-                    'accept': 'application/json',
-                    'content-type': 'application/json',
-                    'api-key': process.env.brevo_api_key
-                }
+            await request(url, data, headers, true)
+            .then(() => {
+                console.log(`Email request was sent for session id ${session_id}.`);
             }).catch(err => {
                 console.log(`Failed to send email for session id ${session_id}.`, err);
             });
-        
-            console.log(`Email request was sent for session id ${session_id}.`);
         }
 
         console.log(`Redirecting to ${redirectUrl} in environment ${event.stageVariables.environment}.`);
