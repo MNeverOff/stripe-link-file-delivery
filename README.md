@@ -75,6 +75,7 @@ These figures assume `email_mode` is not set to `ensure-delivery`. If it is then
 ### Potential improvements
 
 1. It's possible to use a language different from JS (Go?) that would have faster execution times or better init times. JS is not the fastest, but with tree-shaking it gets sub 750ms which is commendable.
+2. It's further possible to add better handling to email failure, potentially by sending an email to the `support_email` with a report on the failure.
 
 ## Contributing
 
