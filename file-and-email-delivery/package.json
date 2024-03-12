@@ -3,5 +3,12 @@
   "dependencies": {
     "axios": "^1.6.7",
     "stripe": "^14.20.0"
+  },
+  "devDependencies": {
+    "webpack": "^5.90.3",
+    "webpack-cli": "^5.1.4"
+  },
+  "scripts": {
+    "build": "webpack"
   }
 }
