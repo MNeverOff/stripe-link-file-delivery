@@ -66,6 +66,8 @@ Bear in mind that I am not updating thoe files in lockstep so some of the variab
 
 I'm open to contribution and suggestions, feel free to open an issue or a pull request.
 
+I would be especially grateful for suggestions on how to speed up the Lambda to sub-1000ms execution time. Currently the Init is about 1000ms and Execution hovers around 2500ms, producing a noticeable delay for the customer.
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
