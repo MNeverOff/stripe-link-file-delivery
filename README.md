@@ -59,7 +59,7 @@ This diagram roughly outlines the flow of the application. The customer clicks t
 
 ## Separate Lambdas
 
-If you navigate to `/separate-lambdas` you can find a version of the application that uses separate Lambdas for each of the functions. This is useful if you want to have a more granular control over the permissions and the codebase or want to rely on webhooks more heavily, or want each of the lambdas to execute just a bit quicker - it's all up to you.
+If you navigate to [separate-lambdas](/separate-lambdas) you can find a version of the application that uses separate Lambdas for each of the functions. This is useful if you want to have a more granular control over the permissions and the codebase or want to rely on webhooks more heavily, or want each of the lambdas to execute just a bit quicker - it's all up to you.
 Bear in mind that I am not updating thoe files in lockstep so some of the variables might be different.
 
 ## Contributing
