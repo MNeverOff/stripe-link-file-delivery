@@ -4,7 +4,7 @@ This is a simple serverless application that uses AWS Lambda, Stripe and Brevo t
 
 ## Demo
 
-[Expand to see the demo of the finished solution](https://github.com/MNeverOff/stripe-link-file-delivery/assets/3989091/4ae214e3-33a3-461c-89b5-65b08a02b562)
+[Expand to see the demo of the finished solution](https://github.com/MNeverOff/stripe-link-file-delivery/blob/main/assets/demo.webm)
 
 ## In-depth guide
 
