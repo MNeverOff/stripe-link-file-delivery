@@ -1,6 +1,8 @@
 ![Cover Image](assets/cover.svg)
 
-This is a simple serverless application that uses AWS Lambda, Stripe and Brevo to deliver files to customers after they have made a payment via your Stripe Payment Link. Because Gumroad and KoFi may be nice, but why not manage your own payment links and have a straight-forward user experience?
+This is a simple serverless application that uses AWS Lambda, Stripe and Brevo to deliver files to customers after they have made a payment via your Stripe Payment Link.
+
+Because KoFi and Gumroad may be nice, but why not manage your own payment links and have a straight-forward user experience?
 
 ## Demo
 
@@ -9,6 +11,12 @@ This is a simple serverless application that uses AWS Lambda, Stripe and Brevo t
 ## In-depth guide
 
 You can read a detailed guide on setting this up in [my blog](https://neveroff.dev/blog/stripe-payment-link-file-download-with-email/).
+
+### Why not Zapier?
+
+Owning your infrastructure aside, Zapier has [improved away](https://community.zapier.com/how-do-i-3/how-do-i-connect-both-a-stripe-live-account-and-test-account-16313?postid=133299&ref=neveroff.dev#post133299) an ability to use Stripe Test Mode in their integration in 2023 and still hasn't brought it back, which seems entirely counterintuitive.
+
+And whilst there are other options to achieve this with Zapier, I'd have much less control over execution, speed or overall experience and my faith in them maintaining that weorkaround option isn't great following their decision on the direct integration. I talk more about this in my [blog post](https://neveroff.dev/blog/stripe-payment-link-file-download-with-email/#what-about-zapier).
 
 ## Getting started without the guide
 
@@ -21,6 +29,7 @@ You can read a detailed guide on setting this up in [my blog](https://neveroff.d
 7. Configure the Stripe Payment Link to point to the API Gateway URL for the `file-and-email-delivery` Lambda.
 8. Configure Brevo and your Static Site, get the Brevo Tempalte ID, API Key, insert the script to initiate the download from [download_url.html](/download_url.html), insert the Stripe Payment Link URL or Button embed.
 9. Use the Stripe Test mode to ensure that your customer path is working as expected and an email is sent out with the file download link.
+10. Replace the URL on your Static Website to point to the Live Stripe Payment Link.
 
 ## Variables
 
@@ -57,20 +66,23 @@ Provide thtese under API Gateway -> Stage -> Stage Variables:
 
 ![Flow Diagram](assets/flow.svg)
 
-This diagram roughly outlines the flow of the application. The customer clicks the Stripe Payment Link, is redirected to the API Gateway, which triggers the Lambda function. The Lambda function checks the payment status with Stripe, if it's successful, it sends an email with the download link and redirects the customer to the confirmation page. If the payment is not successful, it redirects the customer to the support email.
+This diagram roughly outlines the flow of the application. The customer clicks the Stripe Payment Link, is redirected to the API Gateway, which triggers the Lambda function. 
+
+The Lambda function checks the payment status with Stripe, if it's successful, it sends an email with the download link and redirects the customer to the confirmation page. If the payment is not successful, it redirects the customer to the support email.
 
 ## Separate Lambdas
 
-If you navigate to [separate-lambdas](/separate-lambdas) you can find a version of the application that uses separate Lambdas for each of the functions. This is useful if you want to have a more granular control over the permissions and the codebase or want to rely on webhooks more heavily, or want each of the lambdas to execute just a bit quicker - it's all up to you.
-Bear in mind that I am not updating thoe files in lockstep so some of the variables might be different, specifically - they are woefully unoptimised compared to the current combined version with execution times in 1,000-1,500ms and still don't rely on built-in aws-sdk-js-v3 that Lambda environment provides.
+Previous versions of this project have a separate lambdas approach, where one would handle a webhook from Stripe and send an email and another would handle the HTTP redirect from the Stripe Payment Link.
+
+I have abandoned it in favor of unified approach, and whilst it doesen't separate the concerns very well, the overlap in code and functionality felt too great to maintain them separately, not to mention the hassle and price increase added with two sets of API Gateways and two Lambdas.
 
 ## Performance
 
 When configured with 1 vCPU (currently 1,769 MB) the cold start is ~450ms and execution is ~300ms, **achieving sub-750ms processing**.
 
-If the function is hot then the total execution goes down to ~200ms.
+Warm execution goes down to ~200ms.
 
-These figures assume `email_mode` is not set to `ensure-delivery`. If it is then both cold and hot execution times rises by about 100-150ms.
+These figures assume `email_mode` is not set to `ensure-delivery`. If it is then both cold and warm execution times rises by about 100-150ms.
 
 ### Potential improvements
 
@@ -81,7 +93,7 @@ These figures assume `email_mode` is not set to `ensure-delivery`. If it is then
 
 I'm open to contribution and suggestions, feel free to open an issue or a pull request.
 
-I would be especially grateful for suggestions on how to speed up the Lambda to sub-1000ms execution time. Currently the Init is about 1000ms and Execution hovers around 2500ms, producing a noticeable delay for the customer.
+I would be especially grateful for suggestions on how to speed up the Lambda to sub-750ms execution time, keeping in mind the currently presented outlined improvements.
 
 ## License
 
