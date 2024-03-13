@@ -32,7 +32,7 @@ Provide thtese under Lambda -> Configuration -> Environment Variables:
 | -------- | --- |
 | S3_ACCESS_KEY_ID | The IAM user Access Key |
 | S3_SECRET_ACCESS_KEY | The IAM user Access Secret Key |
-| S3_REGION | The region of your S3 bucket. `us-east-1` by default |
+| S3_REGION | The region of your S3 bucket. `eu-west-2` in this guide |
 | bucket_name | The name of S3 bucket with the file, `file-delivery` in our case |
 | object_key | The file's object key, `file.zip` |
 | redirect_host | The url of our confirmation page |
