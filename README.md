@@ -6,7 +6,8 @@ Because KoFi and Gumroad may be nice, but why not manage your own payment links 
 
 ## Demo
 
-[Expand to see the demo of the finished solution](https://github.com/MNeverOff/stripe-link-file-delivery/assets/3989091/b666c9f3-6cb8-4e5d-a74e-08e28d231dbc)
+[Expand to see the demo of the finished solution](https://github.com/MNeverOff/stripe-link-file-delivery/assets/3989091/b717a3f7-35aa-4f29-b1bd-4ae63b7ab526)
+
 
 ## In-depth guide
 
